@@ -1,9 +1,16 @@
-const SYSTEM_PROMPT = `あなたは採用ピッチ資料の専門家です。提供された求人原稿・ホームページ情報からデータを抽出してください。
+const SYSTEM_PROMPT = `あなたは採用ピッチ資料の専門家です。提供された求人原稿からデータを抽出してください。
 
 【最重要ルール】
 ■ 数字・固有名詞（給与・勤務時間・休日・住所・社名・従業員数・売上など）は原稿に書いてある数字・言葉だけを使う。書いていなければ必ず空文字にする。絶対に推測・補完・でっち上げをしない。
 ■ 文章・方向性・説明文（ミッション・カルチャー・事業説明など）は原稿の内容をもとにAIが自然にまとめてよい。
 ■ JSON形式のみで回答。前置き・説明不要。
+
+【給与の判定ルール（厳守）】
+・月給・月収の場合：salaryUnit="月給"、salaryMin/salaryMax=万円単位の数字
+・年俸・年収の場合：salaryUnit="年俸"、salaryMin/salaryMax=万円単位の数字
+・時給の場合：salaryUnit="時給"、salaryMin/salaryMax=円単位の数字（例：時給1200円→salaryMin="1200"）
+・日給の場合：salaryUnit="日給"、salaryMin/salaryMax=円単位の数字
+・時給・日給の場合、絶対に万円換算しないこと。原稿の数字をそのまま使う。
 
 {
   "companyName": "会社名（原稿から）",
@@ -25,7 +32,7 @@ const SYSTEM_PROMPT = `あなたは採用ピッチ資料の専門家です。提
   "cultureVal1": "カルチャー価値観1（原稿から読み取れるもの）",
   "cultureVal2": "カルチャー価値観2（原稿から読み取れるもの）",
   "cultureDesc": "カルチャー説明（原稿の職場環境・インタビューをもとに300文字）",
-  "wantedList": ["求める人物像（原稿の求める人材から）","","","",""],
+  "wantedList": ["求める人物像（原稿の求める人材から・簡潔に20文字以内で）","","","",""],
   "interview": {
     "person": "インタビュー対象者（原稿に記載あれば。なければ空文字）",
     "q1": "質問1（原稿から）",
@@ -35,9 +42,9 @@ const SYSTEM_PROMPT = `あなたは採用ピッチ資料の専門家です。提
     "q3": "質問3（原稿から）",
     "a3": "回答3（原稿から）"
   },
-  "salaryMin": "【数字のみ・万円】最低給与（原稿の数字をそのまま。なければ空文字）",
-  "salaryMax": "【数字のみ・万円】最高給与（原稿の数字をそのまま。なければ空文字）",
-  "salaryUnit": "月給 or 年俸（原稿から）",
+  "salaryMin": "給与の下限（月給・年俸なら万円単位の数字のみ。時給・日給なら円単位の数字のみ。なければ空文字）",
+  "salaryMax": "給与の上限（月給・年俸なら万円単位の数字のみ。時給・日給なら円単位の数字のみ。なければ空文字）",
+  "salaryUnit": "月給 or 年俸 or 時給 or 日給（原稿から正確に判定）",
   "salaryNote": "給与備考（原稿から。固定残業・賞与など）",
   "salaryFactors": [
     {"name":"要素名（原稿から）","desc":"説明（原稿から）"},
@@ -45,7 +52,7 @@ const SYSTEM_PROMPT = `あなたは採用ピッチ資料の専門家です。提
     {"name":"","desc":""}
   ],
   "careerPath": [
-    {"title":"ポジション名（原稿から）","period":"期間（原稿から）","salary":"年収目安（原稿の数字のみ）","desc":"説明（原稿から）"},
+    {"title":"ポジション名（原稿から）","period":"期間（原稿から）","salary":"年収目安（原稿の数字のみ）","desc":"説明（原稿から・簡潔に）"},
     {"title":"","period":"","salary":"","desc":""},
     {"title":"","period":"","salary":"","desc":""},
     {"title":"","period":"","salary":"","desc":""}
@@ -88,8 +95,8 @@ module.exports = async function(req, res) {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 4000,
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8000,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: text }]
       })
