@@ -227,7 +227,7 @@ async function makePptx(e,url,photos){
   };
 
   // 画像
-  const img=(sl,id,x,y,w,h)=>{if(photos[id])sl.addImage({data:photos[id],x,y,w,h,sizing:{type:'cover',w,h}});};
+  const img=(sl,id,x,y,w,h)=>{if(photos[id])sl.addImage({data:photos[id],x,y,w,h});};
 
   // Indeedレンジ判定
   const isIndeedRange=(s)=>{
