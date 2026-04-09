@@ -81,7 +81,7 @@ textarea{min-height:200px;resize:vertical;line-height:1.6}
       <div style="font-size:11px;color:#7A8AAA;margin-top:4px" id="char-count">0文字</div>
     </div>
     <div class="section">
-      <label>② ホームページURL <span style="color:#7A8AAA;font-weight:400">（任意）</span></label>
+      <label>② ホームページURL <span style="color:#7A8AAA;font-weight:400">（任意・入れると会社情報を自動補強）</span></label>
       <input type="text" id="hp-url" placeholder="https://example.com">
     </div>
     <div class="section">
@@ -175,7 +175,7 @@ async function startGenerate(){
   for(let i=1;i<=4;i++){
     if(i>1){document.getElementById('loading-msg').textContent=`混雑中... リトライ ${i}/4`;await sleep(3000*i);}
     try{
-      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,password:pw})});
+      const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,password:pw,hpUrl:url})});
       const j=await r.json();
       if(j.error&&j.error.toLowerCase().includes('overload')&&i<4)continue;
       if(j.error)throw new Error(j.error);
