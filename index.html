@@ -129,7 +129,21 @@ function handlePhoto(id,input){handlePhotoFile(id,input.files[0]);}
 function handlePhotoFile(id,file){
   if(!file||!file.type.startsWith('image/'))return;
   const reader=new FileReader();
-  reader.onload=e=>{photos[id]=e.target.result;document.getElementById('slot-'+id).querySelector('.photo-empty').innerHTML=`<img src="${e.target.result}" style="width:100%;height:110px;object-fit:cover;display:block">`;};
+  reader.onload=e=>{
+    const result=e.target.result;
+    // Canvasを使ってPNGに変換（webp対応）
+    const image=new Image();
+    image.onload=()=>{
+      const canvas=document.createElement('canvas');
+      canvas.width=image.width;canvas.height=image.height;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(image,0,0);
+      const png=canvas.toDataURL('image/png');
+      photos[id]=png;
+      document.getElementById('slot-'+id).querySelector('.photo-empty').innerHTML=`<img src="${result}" style="width:100%;height:110px;object-fit:cover;display:block">`;
+    };
+    image.src=result;
+  };
   reader.readAsDataURL(file);
 }
 document.getElementById('indeed-text').addEventListener('input',function(){document.getElementById('char-count').textContent=this.value.length+'文字';});
