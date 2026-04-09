@@ -184,342 +184,389 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function makePptx(e,url,photos){
   const pres=new PptxGenJS();pres.layout='LAYOUT_16x9';
   const cn=e.companyName||'会社名';const F='Yu Gothic';
+
+  // ── デザインシステム ──
   const C={
-    NAVY:'1A2B4A',NAVY2:'1E3357',BLUE:'1B7EC4',CYAN:'0EA5D4',
-    TEXT:'1E293B',GRAY:'64748B',LGRAY:'94A3B8',WHITE:'FFFFFF',
-    BG:'F8FAFC',CARD:'FFFFFF',BORDER:'E2E8F0',ACCENT:'EFF6FF'
+    BLUE:'1B6FBE',      // メインブルー
+    LBLUE:'3B8FD4',     // ライトブルー
+    NAVY:'1A2B4A',      // ダークネイビー（アクセントのみ）
+    TEXT:'1A1A2E',      // 本文テキスト
+    GRAY:'6B7280',      // セカンダリテキスト
+    LGRAY:'9CA3AF',     // キャプション
+    WHITE:'FFFFFF',
+    BG:'F9FAFB',        // 背景（ほぼ白）
+    LIGHT:'EBF4FF',     // 薄いブルー
+    BORDER:'E5E7EB',    // ボーダー
+    LINE:'DBEAFE',      // アクセントライン
   };
 
-  // セクション区切り（ダーク・スタイリッシュ）
-  const sec=(num,title)=>{
-    const sl=pres.addSlide();sl.background={color:C.NAVY};
-    sl.addText(String(num).padStart(2,'0'),{x:4.8,y:-0.2,w:5.5,h:6.0,fontSize:210,color:C.NAVY2,fontFace:F,bold:true,align:'center',valign:'middle'});
-    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    sl.addText('0'+num,{x:0.3,y:1.55,w:1.5,h:0.45,fontSize:11,color:C.BLUE,fontFace:F,bold:true});
-    sl.addShape(pres.shapes.LINE,{x:0.3,y:2.1,w:3.0,h:0,line:{color:'2A4070',width:1}});
-    sl.addText(title,{x:0.3,y:2.25,w:5.8,h:2.0,fontSize:28,color:C.WHITE,fontFace:F,bold:true,lineSpacingMultiple:1.3});
-  };
-
-  // ヘッダー（ネイビー帯＋ブルーライン）
+  // ── ヘルパー ──
+  // シンプルヘッダー（細線＋セクション番号＋タイトル）
   const hdr=(sl,num,title)=>{
-    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.50,fill:{color:C.NAVY},line:{color:C.NAVY}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:0.50,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    sl.addText(String(num).padStart(2,'0')+'  '+title,{x:0.2,y:0,w:7,h:0.50,fontSize:12,color:C.WHITE,fontFace:F,bold:true,valign:'middle'});
+    // 上部細ライン
+    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    // セクション番号
+    if(num) sl.addText(num,{x:0.4,y:0.15,w:0.6,h:0.32,fontSize:9,color:C.BLUE,fontFace:F,bold:true});
+    // タイトル
+    sl.addText(title,{x:num?0.95:0.4,y:0.14,w:6.5,h:0.34,fontSize:13,color:C.TEXT,fontFace:F,bold:true,valign:'middle'});
+    // 右：ロゴまたは社名
     if(photos['logo']){
-      sl.addImage({data:photos['logo'],x:8.55,y:0.05,w:1.3,h:0.4});
+      sl.addImage({data:photos['logo'],x:8.3,y:0.06,w:1.5,h:0.42});
     }else{
-      sl.addText(cn,{x:7,y:0,w:2.9,h:0.50,fontSize:9,color:'7AAAC8',fontFace:F,valign:'middle',align:'right'});
+      sl.addText(cn,{x:7.0,y:0.14,w:2.8,h:0.34,fontSize:9,color:C.LGRAY,fontFace:F,valign:'middle',align:'right'});
     }
+    // 下部区切り線
+    sl.addShape(pres.shapes.LINE,{x:0.4,y:0.55,w:9.2,h:0,line:{color:C.BORDER,width:0.5}});
   };
 
   // フッター
   const ftr=(sl,pg)=>{
-    sl.addShape(pres.shapes.LINE,{x:0.3,y:5.18,w:9.4,h:0,line:{color:C.BORDER,width:0.5}});
-    sl.addText(String(pg),{x:0.3,y:5.23,w:0.8,h:0.28,fontSize:8,color:C.LGRAY,fontFace:F});
-    sl.addText('© '+cn,{x:5.5,y:5.23,w:4.2,h:0.28,fontSize:8,color:C.LGRAY,fontFace:F,align:'right'});
+    sl.addShape(pres.shapes.LINE,{x:0.4,y:5.2,w:9.2,h:0,line:{color:C.BORDER,width:0.5}});
+    sl.addText(String(pg),{x:0.4,y:5.26,w:0.6,h:0.24,fontSize:8,color:C.LGRAY,fontFace:F});
+    sl.addText('© '+cn,{x:5.5,y:5.26,w:4.1,h:0.24,fontSize:8,color:C.LGRAY,fontFace:F,align:'right'});
   };
 
   // 画像
   const img=(sl,id,x,y,w,h)=>{if(photos[id])sl.addImage({data:photos[id],x,y,w,h,sizing:{type:'cover',w,h}});};
-  // IndeedのUI表示レンジ判定（例：50〜149人 → 除外）
+
+  // Indeedレンジ判定
   const isIndeedRange=(s)=>{
-    if(!s)return false;
-    const t=s.trim();
+    if(!s)return false;const t=s.trim();
     return /^\d+[\u301C\uFF5E~〜\-]\d+人$/.test(t)||/^\d+人以上$/.test(t)||
            ['1〜49人','50〜149人','150〜299人','300〜999人','1000人以上'].includes(t);
   };
 
-  // ── 1. タイトル ──
-  {const sl=pres.addSlide();sl.background={color:C.NAVY};
-    img(sl,'cover',4.8,0,5.2,5.625);
-    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:5.4,h:5.625,fill:{color:C.NAVY},line:{color:C.NAVY}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    if(photos['logo']){
-      sl.addImage({data:photos['logo'],x:0.35,y:0.28,w:2.0,h:0.7});
-      sl.addText(cn,{x:0.35,y:1.3,w:4.8,h:0.9,fontSize:28,color:C.WHITE,fontFace:F,bold:true,valign:'middle'});
-    }else{
-      sl.addText(cn,{x:0.35,y:1.3,w:4.8,h:0.9,fontSize:28,color:C.WHITE,fontFace:F,bold:true,valign:'middle'});
-    }
-    sl.addShape(pres.shapes.LINE,{x:0.35,y:2.38,w:2.8,h:0,line:{color:C.BLUE,width:1.5}});
-    sl.addText('採用ピッチ資料',{x:0.35,y:2.52,w:4.8,h:0.55,fontSize:16,color:'8AB8D8',fontFace:F,valign:'middle'});
-    if(url)sl.addText(url,{x:0.35,y:3.22,w:4.5,h:0.32,fontSize:10,color:'5A90B0',fontFace:F});
-    sl.addText('© '+cn,{x:0.35,y:5.22,w:4,h:0.28,fontSize:8,color:'3A6080',fontFace:F});}
+  // セクション区切り（ミニマル・クリーン）
+  const sec=(num,title,sub)=>{
+    const sl=pres.addSlide();sl.background={color:C.WHITE};
+    // 左の太いブルーライン
+    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.12,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    // 薄いブルー背景帯
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.12,y:0,w:9.88,h:5.625,fill:{color:'F5F9FF'},line:{color:'F5F9FF'}});
+    // 大きなセクション番号（薄く・背景装飾）
+    sl.addText(String(num).padStart(2,'0'),{x:5.5,y:0.5,w:4.2,h:4.5,fontSize:200,color:'EBF4FF',fontFace:'Arial',bold:true,align:'center',valign:'middle'});
+    // セクションラベル
+    sl.addText('SECTION '+String(num).padStart(2,'0'),{x:0.55,y:1.6,w:4,h:0.35,fontSize:10,color:C.BLUE,fontFace:'Arial',bold:true});
+    // タイトル
+    sl.addText(title,{x:0.55,y:2.05,w:5.5,h:1.8,fontSize:32,color:C.TEXT,fontFace:F,bold:true,lineSpacingMultiple:1.3});
+    // サブテキスト
+    if(sub) sl.addText(sub,{x:0.55,y:3.88,w:5,h:0.45,fontSize:12,color:C.GRAY,fontFace:F});
+  };
 
-  // ── 2. 目次 ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 1. タイトル
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.WHITE};
-    hdr(sl,'','目次');
-    ['会社概要','組織','事業紹介','評価・報酬制度','カルチャー','働き方・制度'].forEach((s,i)=>{
-      const y=0.72+i*0.72;
-      sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:y+0.1,w:0.34,h:0.34,fill:{color:C.BLUE},line:{color:C.BLUE}});
-      sl.addText(String(i+1).padStart(2,'0'),{x:0.35,y:y+0.1,w:0.34,h:0.34,fontSize:9,color:C.WHITE,fontFace:F,bold:true,align:'center',valign:'middle'});
-      sl.addText(s,{x:0.88,y,w:8.5,h:0.52,fontSize:17,color:C.TEXT,fontFace:F,valign:'middle'});
-      if(i<5)sl.addShape(pres.shapes.LINE,{x:0.35,y:y+0.57,w:9.3,h:0,line:{color:C.BORDER,width:0.5}});
-    });}
+    // 右半分：写真（なければ薄いブルー）
+    if(photos['cover']){
+      img(sl,'cover',4.6,0,5.4,5.625);
+    }else{
+      sl.addShape(pres.shapes.RECTANGLE,{x:4.6,y:0,w:5.4,h:5.625,fill:{color:C.LIGHT},line:{color:C.LIGHT}});
+    }
+    // 左の縦ライン
+    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.12,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    // ロゴ
+    if(photos['logo']){
+      sl.addImage({data:photos['logo'],x:0.4,y:0.4,w:2.2,h:0.75});
+    }
+    // 会社名
+    const titleY=photos['logo']?1.5:1.2;
+    sl.addText(cn,{x:0.4,y:titleY,w:4.0,h:1.1,fontSize:30,color:C.TEXT,fontFace:F,bold:true,lineSpacingMultiple:1.2});
+    // 区切り線
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:titleY+1.2,w:1.8,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    // サブタイトル
+    sl.addText('採用ピッチ資料',{x:0.4,y:titleY+1.4,w:4.0,h:0.5,fontSize:15,color:C.GRAY,fontFace:F});
+    // URL
+    if(url) sl.addText(url,{x:0.4,y:titleY+2.0,w:4.0,h:0.35,fontSize:9,color:C.LBLUE,fontFace:F});
+    // フッター
+    sl.addText('© '+cn,{x:0.4,y:5.26,w:4,h:0.24,fontSize:8,color:C.LGRAY,fontFace:F});}
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 2. 目次
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  {const sl=pres.addSlide();sl.background={color:C.WHITE};
+    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.12,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addText('目次',{x:0.4,y:0.4,w:3,h:0.6,fontSize:22,color:C.TEXT,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.LINE,{x:0.4,y:1.1,w:9.2,h:0,line:{color:C.BORDER,width:0.5}});
+    const tocItems=['会社概要','組織','事業紹介','評価・報酬制度','カルチャー','働き方・制度'];
+    tocItems.forEach((s,i)=>{
+      const y=1.22+i*0.66;
+      sl.addText(String(i+1).padStart(2,'0'),{x:0.4,y,w:0.55,h:0.52,fontSize:11,color:C.BLUE,fontFace:'Arial',bold:true,valign:'middle'});
+      sl.addText(s,{x:1.05,y,w:7.5,h:0.52,fontSize:16,color:C.TEXT,fontFace:F,valign:'middle'});
+      if(i<5) sl.addShape(pres.shapes.LINE,{x:0.4,y:y+0.55,w:9.2,h:0,line:{color:C.BORDER,width:0.5}});});
+    sl.addText('© '+cn,{x:5.5,y:5.26,w:4.1,h:0.24,fontSize:8,color:C.LGRAY,fontFace:F,align:'right'});}
 
   sec(1,'会社概要');
 
-  // ── 4. 会社概要 ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 4. 会社概要
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'01','会社概要');
-    const rows=[['社名',e.companyName],['所在地',e.address],['代表者',e.ceo],['設立',e.founded],['従業員',isIndeedRange(e.employees)?'':e.employees],['売上高',e.sales],['事業内容',e.business],['HP',url]].filter(r=>r[1]&&r[1].trim());
-    rows.forEach(([k,v],i)=>{const y=0.66+i*0.54;
-      sl.addText(k,{x:0.35,y,w:1.3,h:0.44,fontSize:10,color:C.GRAY,fontFace:F,valign:'middle'});
-      sl.addText(v,{x:1.8,y,w:4.8,h:0.44,fontSize:11,color:C.TEXT,fontFace:F,valign:'middle'});
-      sl.addShape(pres.shapes.LINE,{x:0.35,y:y+0.44,w:6.3,h:0,line:{color:C.BORDER,width:0.5}});});
-    img(sl,'company',6.85,0.6,2.85,4.7);ftr(sl,4);}
+    const rows=[['社名',e.companyName],['所在地',e.address],['代表者',e.ceo],['設立',e.founded],
+      ['従業員',isIndeedRange(e.employees)?'':e.employees],['売上高',e.sales],['事業内容',e.business],['HP',url]
+    ].filter(r=>r[1]&&r[1].trim());
+    rows.forEach(([k,v],i)=>{const y=0.72+i*0.54;
+      sl.addText(k,{x:0.4,y,w:1.4,h:0.44,fontSize:10,color:C.GRAY,fontFace:F,valign:'middle'});
+      sl.addShape(pres.shapes.LINE,{x:1.9,y:y+0.02,w:0,h:0.4,line:{color:C.BORDER,width:0.5}});
+      sl.addText(v,{x:2.05,y,w:4.5,h:0.44,fontSize:11,color:C.TEXT,fontFace:F,valign:'middle'});
+      sl.addShape(pres.shapes.LINE,{x:0.4,y:y+0.46,w:6.3,h:0,line:{color:C.BORDER,width:0.5}});});
+    img(sl,'company',7.0,0.65,2.7,4.62);ftr(sl,4);}
 
-  // ── 5. ミッション（大きな装飾クォート付き） ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 5. ミッション
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.NAVY};
-    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    // 装飾：大きなクォーテーションマーク
-    sl.addText('"',{x:0.2,y:-0.3,w:2,h:2.2,fontSize:180,color:'1E3357',fontFace:'Georgia',bold:true});
-    sl.addText('MISSION',{x:0.3,y:0.45,w:3,h:0.3,fontSize:9,color:C.BLUE,fontFace:'Arial',bold:true});
-    sl.addText(e.mission||'',{x:0.3,y:0.9,w:9.4,h:2.2,fontSize:26,color:C.WHITE,fontFace:F,bold:true,lineSpacingMultiple:1.45});
-    if(e.missionEn)sl.addText('"'+e.missionEn+'"',{x:0.3,y:3.05,w:9.2,h:0.42,fontSize:13,color:'6A9CB8',fontFace:'Arial',italic:true});
-    sl.addShape(pres.shapes.LINE,{x:0.3,y:3.58,w:2.5,h:0,line:{color:'2A4070',width:1}});
-    sl.addText(e.missionDesc||'',{x:0.3,y:3.72,w:9.4,h:1.6,fontSize:11.5,color:'8AAABB',fontFace:F,lineSpacingMultiple:1.7});}
+    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.12,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    // 装飾クォート
+    sl.addText('"',{x:0.3,y:-0.5,w:3,h:3,fontSize:200,color:'1E3560',fontFace:'Georgia',bold:true});
+    sl.addText('MISSION',{x:0.5,y:0.5,w:3,h:0.3,fontSize:9,color:C.BLUE,fontFace:'Arial',bold:true,charSpacing:3});
+    sl.addText(e.mission||'',{x:0.5,y:0.95,w:9.1,h:2.0,fontSize:26,color:C.WHITE,fontFace:F,bold:true,lineSpacingMultiple:1.5});
+    if(e.missionEn) sl.addText('"'+e.missionEn+'"',{x:0.5,y:2.95,w:9,h:0.4,fontSize:12,color:'5B8BB8',fontFace:'Georgia',italic:true});
+    sl.addShape(pres.shapes.LINE,{x:0.5,y:3.45,w:2.0,h:0,line:{color:'2A4878',width:1}});
+    sl.addText(e.missionDesc||'',{x:0.5,y:3.6,w:9.1,h:1.7,fontSize:11,color:'8AAABB',fontFace:F,lineSpacingMultiple:1.8});}
 
-  sec(2,'組織（職種・構成など）');
+  sec(2,'組織');
 
-  // ── 7. 組織 ──
-  {const sl=pres.addSlide();sl.background={color:C.BG};hdr(sl,'02','組織');
-    // Indeedレンジ除外＋縦中央寄せ
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 7. 組織
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'02','組織');
     const orgCards=[[e.employees,'従業員数'],[e.founded,'設立'],[e.ceo,'代表者']]
       .filter(([n])=>n&&n.trim()&&!isIndeedRange(n));
-    const leftW=6.7,cardW=orgCards.length<=2?2.8:1.85,cardGap=orgCards.length<=2?0.4:0.28;
-    const orgTotalW=orgCards.length*cardW+(orgCards.length-1)*cardGap;
-    const orgStartX=(leftW-orgTotalW)/2;
-    const cardY=2.0;
-    orgCards.forEach(([n,l],i)=>{const x=orgStartX+i*(cardW+cardGap);
-      sl.addShape(pres.shapes.RECTANGLE,{x,y:cardY,w:cardW,h:1.6,fill:{color:C.WHITE},line:{color:C.BORDER}});
-      sl.addShape(pres.shapes.RECTANGLE,{x,y:cardY,w:cardW,h:0.05,fill:{color:C.NAVY},line:{color:C.NAVY}});
-      sl.addText(n,{x,y:cardY+0.12,w:cardW,h:0.82,fontSize:22,color:C.BLUE,fontFace:F,bold:true,align:'center',valign:'middle'});
-      sl.addText(l,{x,y:cardY+0.88,w:cardW,h:0.32,fontSize:10,color:C.GRAY,fontFace:F,align:'center'});});
-    sl.addShape(pres.shapes.RECTANGLE,{x:7.1,y:0.68,w:2.6,h:4.3,fill:{color:C.WHITE},line:{color:C.BORDER}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:7.1,y:0.68,w:2.6,h:0.05,fill:{color:C.NAVY},line:{color:C.NAVY}});
-    sl.addText('求める人物像',{x:7.2,y:0.82,w:2.4,h:0.3,fontSize:10,color:C.NAVY,fontFace:F,bold:true});
-    const trunc=(s,n=18)=>s.length>n?s.slice(0,n-1)+'…':s;
-    (e.wantedList||[]).slice(0,6).forEach((v,i)=>sl.addText('· '+trunc(v),{x:7.2,y:1.25+i*0.48,w:2.38,h:0.44,fontSize:9,color:C.TEXT,fontFace:F}));
+    const leftW=6.8;
+    const cardW=orgCards.length<=2?2.8:1.9;
+    const cardGap=orgCards.length<=2?0.5:0.28;
+    const totalW=orgCards.length*cardW+(orgCards.length-1)*cardGap;
+    const startX=(leftW-totalW)/2;
+    const cardY=1.8;
+    orgCards.forEach(([n,l],i)=>{const x=startX+i*(cardW+cardGap);
+      sl.addShape(pres.shapes.RECTANGLE,{x,y:cardY,w:cardW,h:1.7,fill:{color:C.LIGHT},line:{color:C.LINE}});
+      sl.addShape(pres.shapes.RECTANGLE,{x,y:cardY,w:cardW,h:0.06,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(n,{x,y:cardY+0.15,w:cardW,h:0.9,fontSize:24,color:C.BLUE,fontFace:F,bold:true,align:'center',valign:'middle'});
+      sl.addShape(pres.shapes.LINE,{x:x+0.3,y:cardY+1.02,w:cardW-0.6,h:0,line:{color:C.LINE,width:0.5}});
+      sl.addText(l,{x,y:cardY+1.1,w:cardW,h:0.35,fontSize:10,color:C.GRAY,fontFace:F,align:'center'});});
+    // 求める人物像
+    sl.addShape(pres.shapes.RECTANGLE,{x:7.1,y:0.68,w:2.65,h:4.46,fill:{color:C.BG},line:{color:C.BORDER}});
+    sl.addShape(pres.shapes.RECTANGLE,{x:7.1,y:0.68,w:2.65,h:0.06,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addText('求める人物像',{x:7.22,y:0.82,w:2.4,h:0.32,fontSize:10,color:C.NAVY,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.LINE,{x:7.22,y:1.17,w:2.3,h:0,line:{color:C.BORDER,width:0.5}});
+    const trunc=(s,n=16)=>s&&s.length>n?s.slice(0,n-1)+'…':s||'';
+    (e.wantedList||[]).filter(v=>v&&v.trim()).slice(0,6).forEach((v,i)=>{
+      sl.addShape(pres.shapes.RECTANGLE,{x:7.22,y:1.28+i*0.47,w:0.05,h:0.3,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(trunc(v),{x:7.35,y:1.26+i*0.47,w:2.25,h:0.36,fontSize:9,color:C.TEXT,fontFace:F,valign:'middle'});});
     ftr(sl,7);}
 
   sec(3,'事業紹介');
 
-  // ── 9. 事業概要（参考デザインに近いクリーンカード） ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 9. 事業概要
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'03','事業紹介');
-    // 見出しバナー（ライトブルー背景）
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:0.62,w:9.3,h:0.60,fill:{color:'D8EEF8'},line:{color:'C0DCF0'}});
-    sl.addText(e.bizHeadline||'',{x:0.5,y:0.62,w:9.1,h:0.60,fontSize:16,color:C.NAVY,fontFace:F,bold:true,align:'center',valign:'middle'});
-    // 4象限（上2つ・下2つ）
-    const quadData=[
-      {x:0.35,y:1.32,c:C.BLUE},
-      {x:5.12,y:1.32,c:'0891B2'},
-      {x:0.35,y:3.32,c:'1A2B4A'},
-      {x:5.12,y:3.32,c:'2563A8'}
-    ];
-    quadData.forEach((p,i)=>{
-      const s=(e.services||[])[i];if(!s)return;
-      // カード背景
-      sl.addShape(pres.shapes.RECTANGLE,{x:p.x,y:p.y,w:4.65,h:1.85,fill:{color:C.WHITE},line:{color:C.BORDER}});
-      // 上部カラーライン
-      sl.addShape(pres.shapes.RECTANGLE,{x:p.x,y:p.y,w:4.65,h:0.06,fill:{color:p.c},line:{color:p.c}});
-      // タイトル
-      sl.addText(s.title,{x:p.x+0.15,y:p.y+0.12,w:4.3,h:0.38,fontSize:14,color:p.c,fontFace:F,bold:true});
-      // 区切り線
+    // 見出し
+    sl.addText(e.bizHeadline||'',{x:0.4,y:0.65,w:9.2,h:0.55,fontSize:16,color:C.TEXT,fontFace:F,bold:true,align:'center'});
+    sl.addShape(pres.shapes.LINE,{x:3.5,y:1.22,w:3.0,h:0,line:{color:C.BLUE,width:1.5}});
+    const qPos=[{x:0.4,y:1.38},{x:5.12,y:1.38},{x:0.4,y:3.38},{x:5.12,y:3.38}];
+    qPos.forEach((p,i)=>{
+      const s=(e.services||[])[i];if(!s||!s.title)return;
+      sl.addShape(pres.shapes.RECTANGLE,{x:p.x,y:p.y,w:4.6,h:1.85,fill:{color:C.WHITE},line:{color:C.BORDER}});
+      sl.addShape(pres.shapes.RECTANGLE,{x:p.x,y:p.y,w:4.6,h:0.06,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(s.title,{x:p.x+0.15,y:p.y+0.1,w:4.25,h:0.4,fontSize:13,color:C.BLUE,fontFace:F,bold:true});
       sl.addShape(pres.shapes.LINE,{x:p.x+0.15,y:p.y+0.52,w:4.3,h:0,line:{color:C.BORDER,width:0.5}});
-      // 説明文
-      sl.addText(s.desc,{x:p.x+0.15,y:p.y+0.6,w:4.35,h:1.18,fontSize:10,color:C.TEXT,fontFace:F,lineSpacingMultiple:1.4});});
+      sl.addText(s.desc,{x:p.x+0.15,y:p.y+0.6,w:4.3,h:1.18,fontSize:10,color:C.GRAY,fontFace:F,lineSpacingMultiple:1.45});});
     ftr(sl,9);}
 
-  // ── 10. 事業詳細① ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 10. 事業詳細①
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'03','事業紹介');
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:0.62,w:5.4,h:0.50,fill:{color:C.ACCENT},line:{color:C.BORDER}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:0.62,w:0.05,h:0.50,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    sl.addText(e.biz1Title||'',{x:0.52,y:0.62,w:5.2,h:0.50,fontSize:14,color:C.NAVY,fontFace:F,bold:true,valign:'middle'});
-    sl.addText(e.biz1Body||'',{x:0.35,y:1.25,w:5.8,h:3.8,fontSize:12.5,color:C.TEXT,fontFace:F,lineSpacingMultiple:1.7});
-    img(sl,'biz1',6.4,0.62,3.25,4.2);ftr(sl,10);}
+    sl.addText(e.biz1Title||'',{x:0.4,y:0.65,w:6.0,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addText(e.biz1Body||'',{x:0.4,y:1.35,w:6.0,h:3.7,fontSize:12,color:C.GRAY,fontFace:F,lineSpacingMultiple:1.8});
+    img(sl,'biz1',6.65,0.62,3.1,4.22);ftr(sl,10);}
 
-  // ── 11. 事業詳細②（両方ある場合のみ） ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 11. 事業詳細②
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if(e.biz2Title&&e.biz2Body){
     const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'03','事業紹介');
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:0.62,w:4.2,h:0.50,fill:{color:C.ACCENT},line:{color:C.BORDER}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:0.62,w:0.05,h:0.50,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    sl.addText(e.biz2Title,{x:0.52,y:0.62,w:4.0,h:0.50,fontSize:14,color:C.NAVY,fontFace:F,bold:true,valign:'middle'});
-    sl.addText(e.biz2Body,{x:0.35,y:1.25,w:5.8,h:3.8,fontSize:12.5,color:C.TEXT,fontFace:F,lineSpacingMultiple:1.7});
-    img(sl,'biz2',6.4,0.62,3.25,4.2);ftr(sl,11);}
+    sl.addText(e.biz2Title,{x:0.4,y:0.65,w:6.0,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addText(e.biz2Body,{x:0.4,y:1.35,w:6.0,h:3.7,fontSize:12,color:C.GRAY,fontFace:F,lineSpacingMultiple:1.8});
+    img(sl,'biz2',6.65,0.62,3.1,4.22);ftr(sl,11);}
 
   sec(4,'評価・報酬制度');
 
-  // ── 評価セクション：データ量に応じて柔軟にスライド構成 ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 評価セクション（柔軟）
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const vf=(e.salaryFactors||[]).filter(f=>f.name&&f.name.trim()&&f.desc&&f.desc.trim());
   const vc=(e.careerPath||[]).filter(s=>s&&s.title&&s.title.trim());
   const isHourly=e.salaryUnit==='時給'||e.salaryUnit==='日給';
   const sUnit=isHourly?'円':'万円';
   const stl=isHourly?(e.salaryUnit+'レンジ'):e.salaryUnit==='年俸'?'年俸レンジ':'月給レンジ';
   const sMin=parseInt(e.salaryMin)||0,sMax=parseInt(e.salaryMax)||0;
-  // バーチャート：時給以外で2件以上の年収実績（100万円超）がある場合のみ
   const exs=(e.salaryExamples||[]).filter(ex=>parseInt(ex.amount)>100);
   const hasBar=!isHourly&&exs.length>=2;
 
-  // ── 13. 報酬の考え方（2件以上ある場合のみ） ──
+  // 13. 報酬（2件以上）
   if(vf.length>=2){
     const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'04','評価・報酬制度');
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:0.62,w:9.3,h:0.50,fill:{color:C.ACCENT},line:{color:C.BORDER}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:0.62,w:0.05,h:0.50,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    sl.addText('成果と経験に応じた明確な報酬体系',{x:0.52,y:0.62,w:9.1,h:0.50,fontSize:14,color:C.NAVY,fontFace:F,bold:true,valign:'middle'});
-    vf.slice(0,3).forEach((f,i)=>{const y=1.38+i*1.12;
-      sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:y+0.04,w:1.55,h:0.72,fill:{color:C.NAVY},line:{color:C.NAVY}});
-      sl.addText(f.name,{x:0.35,y:y+0.04,w:1.55,h:0.72,fontSize:11,color:C.WHITE,fontFace:F,bold:true,align:'center',valign:'middle'});
-      sl.addShape(pres.shapes.RECTANGLE,{x:2.0,y:y+0.04,w:7.65,h:0.72,fill:{color:C.BG},line:{color:C.BORDER}});
-      sl.addText('  '+f.desc,{x:2.0,y:y+0.04,w:7.65,h:0.72,fontSize:11.5,color:C.TEXT,fontFace:F,valign:'middle'});});
-    ftr(sl,13);
-  }
+    sl.addText('報酬の考え方',{x:0.4,y:0.65,w:9.2,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    vf.slice(0,3).forEach((f,i)=>{const y=1.42+i*1.15;
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y,w:9.2,h:0.98,fill:{color:C.BG},line:{color:C.BORDER}});
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y,w:0.07,h:0.98,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(f.name,{x:0.62,y:y+0.1,w:1.8,h:0.35,fontSize:12,color:C.BLUE,fontFace:F,bold:true});
+      sl.addShape(pres.shapes.LINE,{x:2.52,y:y+0.12,w:0,h:0.74,line:{color:C.BORDER,width:0.5}});
+      sl.addText(f.desc,{x:2.7,y,w:6.8,h:0.98,fontSize:11.5,color:C.TEXT,fontFace:F,valign:'middle'});});
+    ftr(sl,13);}
 
   if(vc.length>=3){
-    // ── 14. キャリアパス（3件以上：タイムライン表示） ──
+    // 14. キャリアパス（3件以上）
     {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'04','評価・報酬制度');
-      sl.addText('キャリアパス',{x:0.35,y:0.62,w:9.3,h:0.44,fontSize:17,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-      const totalH=vc.length*0.98;
-      const startY=1.18+Math.max(0,(3.92-totalH)/2);
-      sl.addShape(pres.shapes.LINE,{x:0.92,y:startY,w:0,h:totalH||0.98,line:{color:C.BLUE,width:2}});
-      const dc=['B8D8F0','5BA8D8','1B7EC4','0D5FA0'];
-      vc.slice(0,4).forEach((s,i)=>{const y=startY+i*0.98;
-        sl.addShape(pres.shapes.OVAL,{x:0.69,y:y+0.1,w:0.46,h:0.46,fill:{color:dc[i]},line:{color:dc[i]}});
-        sl.addShape(pres.shapes.RECTANGLE,{x:1.32,y,w:8.38,h:0.85,fill:{color:C.WHITE},line:{color:C.BORDER}});
-        sl.addShape(pres.shapes.RECTANGLE,{x:1.32,y,w:0.05,h:0.85,fill:{color:C.BLUE},line:{color:C.BLUE}});
-        sl.addText(s.title,{x:1.48,y:y+0.05,w:4.5,h:0.34,fontSize:13,color:C.NAVY,fontFace:F,bold:true});
-        sl.addText(s.period||'',{x:5.9,y:y+0.05,w:1.6,h:0.34,fontSize:10,color:C.GRAY,fontFace:F});
+      sl.addText('キャリアパス',{x:0.4,y:0.65,w:9.2,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      const totalH=vc.length*1.0;
+      const startY=1.38+Math.max(0,(3.5-totalH)/2);
+      sl.addShape(pres.shapes.LINE,{x:0.88,y:startY,w:0,h:totalH,line:{color:C.LINE,width:2}});
+      const dc=['BFDBFE','60A5FA','1B6FBE','1E3A5F'];
+      vc.slice(0,4).forEach((s,i)=>{const y=startY+i*1.0;
+        sl.addShape(pres.shapes.OVAL,{x:0.65,y:y+0.12,w:0.46,h:0.46,fill:{color:dc[i]},line:{color:dc[i]}});
+        sl.addShape(pres.shapes.RECTANGLE,{x:1.25,y,w:8.38,h:0.88,fill:{color:C.BG},line:{color:C.BORDER}});
+        sl.addText(s.title,{x:1.42,y:y+0.08,w:5,h:0.34,fontSize:13,color:C.TEXT,fontFace:F,bold:true});
         const sal=s.salary&&/^\d+$/.test(s.salary.trim())?s.salary+'万円':(s.salary||'');
-        sl.addText(sal,{x:7.6,y:y+0.05,w:2.0,h:0.34,fontSize:11,color:C.BLUE,fontFace:F,bold:true,align:'right'});
-        sl.addText(s.desc||'',{x:1.48,y:y+0.46,w:8.2,h:0.34,fontSize:10,color:C.GRAY,fontFace:F});});
+        sl.addText(sal,{x:7.6,y:y+0.08,w:2.0,h:0.34,fontSize:12,color:C.BLUE,fontFace:F,bold:true,align:'right'});
+        sl.addText(s.desc||'',{x:1.42,y:y+0.5,w:8.0,h:0.3,fontSize:9.5,color:C.GRAY,fontFace:F});});
       ftr(sl,14);}
-
-    // ── 15. 給与レンジ（キャリアパスと別スライド） ──
+    // 15. 給与レンジ
     {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'04','評価・報酬制度');
-      sl.addText(hasBar?'年収レンジ・実績':stl,{x:0.35,y:0.62,w:6,h:0.42,fontSize:16,color:C.NAVY,fontFace:F,bold:true});
-      const top=1.18,ch=3.5;
+      sl.addText(hasBar?'年収レンジ・実績':stl,{x:0.4,y:0.65,w:9.2,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
       if(hasBar){
-        const maxV=Math.max(...exs.map(ex=>parseInt(ex.amount)||0))*1.15||1000;
-        const bc=['B8D8F0','5BA8D8','1B7EC4'];const bW=1.5,gap=2.0;
+        const maxV=Math.max(...exs.map(x=>parseInt(x.amount)||0))*1.2||1000;
+        const bc=['BFDBFE','60A5FA','1B6FBE'];const bW=1.4,gap=2.0,top=1.45,ch=3.2;
         const tW=exs.slice(0,3).length*bW+(exs.slice(0,3).length-1)*(gap-bW);
-        const sX=(6.3-tW)/2+0.5;
-        exs.slice(0,3).forEach((ex,i)=>{const v=parseInt(ex.amount)||0;if(!v)return;
-          const x=sX+i*gap,bh=v/maxV*ch,by=top+ch-bh;
+        const sX=(6.5-tW)/2+0.4;
+        exs.slice(0,3).forEach((ex,i)=>{if(!parseInt(ex.amount))return;
+          const v=parseInt(ex.amount),x=sX+i*gap,bh=v/maxV*ch,by=top+ch-bh;
           sl.addShape(pres.shapes.RECTANGLE,{x,y:by,w:bW,h:bh,fill:{color:bc[i]},line:{color:bc[i]}});
-          sl.addText(v+'万円',{x:x-0.1,y:by-0.42,w:bW+0.2,h:0.38,fontSize:14,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-          sl.addText(ex.label,{x:x-0.1,y:top+ch+0.08,w:bW+0.2,h:0.42,fontSize:10,color:C.GRAY,fontFace:F,align:'center'});});
-        sl.addShape(pres.shapes.LINE,{x:0.5,y:top+ch,w:6.3,h:0,line:{color:C.BORDER,width:1}});
-        sl.addShape(pres.shapes.RECTANGLE,{x:7.05,y:0.88,w:2.65,h:3.82,fill:{color:C.BG},line:{color:C.BORDER}});
-        sl.addShape(pres.shapes.RECTANGLE,{x:7.05,y:0.88,w:2.65,h:0.05,fill:{color:C.NAVY},line:{color:C.NAVY}});
-        sl.addText(stl,{x:7.15,y:1.05,w:2.45,h:0.35,fontSize:12,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-        if(sMin&&sMax){sl.addText(sMin+'〜',{x:7.1,y:1.55,w:2.55,h:0.68,fontSize:30,color:C.BLUE,fontFace:F,bold:true,align:'center'});sl.addText(sMax+sUnit,{x:7.1,y:2.25,w:2.55,h:0.55,fontSize:22,color:C.BLUE,fontFace:F,bold:true,align:'center'});}
-        sl.addShape(pres.shapes.LINE,{x:7.25,y:2.92,w:2.25,h:0,line:{color:C.BORDER,width:0.5}});
-        ['賞与・昇給','固定残業代含む','※詳細は面接時確認'].forEach((t,i)=>sl.addText(t,{x:7.1,y:3.05+i*0.35,w:2.55,h:0.32,fontSize:9.5,color:C.GRAY,fontFace:F,align:'center'}));
+          sl.addText(v+'万円',{x:x-0.1,y:by-0.42,w:bW+0.2,h:0.38,fontSize:13,color:C.TEXT,fontFace:F,bold:true,align:'center'});
+          sl.addText(ex.label,{x:x-0.1,y:top+ch+0.1,w:bW+0.2,h:0.38,fontSize:9,color:C.GRAY,fontFace:F,align:'center'});});
+        sl.addShape(pres.shapes.LINE,{x:0.4,y:top+ch,w:6.5,h:0,line:{color:C.BORDER,width:1}});
+        // 右：給与カード
+        sl.addShape(pres.shapes.RECTANGLE,{x:7.1,y:1.35,w:2.65,h:3.42,fill:{color:C.LIGHT},line:{color:C.LINE}});
+        sl.addText(stl,{x:7.2,y:1.55,w:2.45,h:0.38,fontSize:11,color:C.NAVY,fontFace:F,bold:true,align:'center'});
+        if(sMin&&sMax){sl.addText(sMin+'〜',{x:7.1,y:2.05,w:2.65,h:0.65,fontSize:28,color:C.BLUE,fontFace:F,bold:true,align:'center'});sl.addText(sMax+sUnit,{x:7.1,y:2.72,w:2.65,h:0.52,fontSize:22,color:C.BLUE,fontFace:F,bold:true,align:'center'});}
+        sl.addShape(pres.shapes.LINE,{x:7.3,y:3.36,w:2.2,h:0,line:{color:C.LINE,width:0.5}});
+        ['賞与・昇給','詳細は面接時確認'].forEach((t,i)=>sl.addText(t,{x:7.1,y:3.48+i*0.3,w:2.65,h:0.28,fontSize:9,color:C.GRAY,fontFace:F,align:'center'}));
       }else if(sMin&&sMax){
-        const cx=3.15,cw=3.7;
-        sl.addShape(pres.shapes.RECTANGLE,{x:cx,y:0.88,w:cw,h:3.9,fill:{color:C.BG},line:{color:C.BORDER}});
-        sl.addShape(pres.shapes.RECTANGLE,{x:cx,y:0.88,w:cw,h:0.05,fill:{color:C.NAVY},line:{color:C.NAVY}});
-        sl.addText(stl,{x:cx+0.1,y:1.1,w:cw-0.2,h:0.42,fontSize:14,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-        sl.addText(sMin+'〜',{x:cx,y:1.72,w:cw,h:0.9,fontSize:42,color:C.BLUE,fontFace:F,bold:true,align:'center'});
-        sl.addText(sMax+sUnit,{x:cx,y:2.65,w:cw,h:0.72,fontSize:32,color:C.BLUE,fontFace:F,bold:true,align:'center'});
-        sl.addShape(pres.shapes.LINE,{x:cx+0.2,y:3.5,w:cw-0.4,h:0,line:{color:C.BORDER,width:0.5}});
-        ['賞与・昇給','固定残業代含む','※詳細は面接時確認'].forEach((t,i)=>sl.addText(t,{x:cx,y:3.62+i*0.35,w:cw,h:0.32,fontSize:10.5,color:C.GRAY,fontFace:F,align:'center'}));
+        const cx=3.2,cw=3.6;
+        sl.addShape(pres.shapes.RECTANGLE,{x:cx,y:1.35,w:cw,h:3.42,fill:{color:C.LIGHT},line:{color:C.LINE}});
+        sl.addText(stl,{x:cx,y:1.6,w:cw,h:0.4,fontSize:13,color:C.NAVY,fontFace:F,bold:true,align:'center'});
+        sl.addText(sMin+'〜',{x:cx,y:2.15,w:cw,h:0.85,fontSize:44,color:C.BLUE,fontFace:F,bold:true,align:'center'});
+        sl.addText(sMax+sUnit,{x:cx,y:3.02,w:cw,h:0.68,fontSize:34,color:C.BLUE,fontFace:F,bold:true,align:'center'});
+        sl.addShape(pres.shapes.LINE,{x:cx+0.3,y:3.82,w:cw-0.6,h:0,line:{color:C.LINE,width:0.5}});
+        const notes=e.salaryNote&&e.salaryNote.trim()?[e.salaryNote]:['賞与・昇給あり','詳細は面接時確認'];
+        notes.slice(0,2).forEach((t,i)=>sl.addText(t,{x:cx,y:3.95+i*0.32,w:cw,h:0.28,fontSize:9.5,color:C.GRAY,fontFace:F,align:'center'}));
       }
       ftr(sl,15);}
-
   }else{
-    // ── 雇用形態・待遇（統合スライド：キャリアパス2件以下 + 給与を1枚に） ──
+    // 雇用形態＋給与 統合スライド
     {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'04','評価・報酬制度');
-      sl.addText('雇用形態・待遇',{x:0.35,y:0.62,w:9.3,h:0.44,fontSize:17,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-      // 左：雇用形態ボックス
-      const boxH=1.2,boxGap=0.3;
-      vc.forEach((s,i)=>{const y=1.2+i*(boxH+boxGap);
-        sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y,w:5.5,h:boxH,fill:{color:C.BG},line:{color:C.BORDER}});
-        sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y,w:0.06,h:boxH,fill:{color:C.BLUE},line:{color:C.BLUE}});
-        sl.addText(s.title,{x:0.55,y:y+0.1,w:5.1,h:0.38,fontSize:14,color:C.NAVY,fontFace:F,bold:true});
-        sl.addText(s.desc||'',{x:0.55,y:y+0.54,w:5.1,h:0.52,fontSize:10.5,color:C.GRAY,fontFace:F});});
-      // 単独報酬情報がある場合は下に追加
-      if(vf.length===1){
-        const fy=1.2+vc.length*(boxH+boxGap)+0.1;
-        sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:fy,w:5.5,h:0.72,fill:{color:C.ACCENT},line:{color:C.BORDER}});
-        sl.addText('  '+vf[0].name+'：'+vf[0].desc,{x:0.35,y:fy,w:5.5,h:0.72,fontSize:11,color:C.NAVY,fontFace:F,valign:'middle'});
-      }
-      // 右：給与レンジカード
+      sl.addText('雇用形態・待遇',{x:0.4,y:0.65,w:9.2,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      vc.forEach((s,i)=>{const y=1.42+i*1.32;
+        sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y,w:5.5,h:1.15,fill:{color:C.BG},line:{color:C.BORDER}});
+        sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y,w:0.07,h:1.15,fill:{color:C.BLUE},line:{color:C.BLUE}});
+        sl.addText(s.title,{x:0.62,y:y+0.12,w:5.0,h:0.38,fontSize:14,color:C.TEXT,fontFace:F,bold:true});
+        sl.addText(s.desc||'',{x:0.62,y:y+0.56,w:5.0,h:0.48,fontSize:10.5,color:C.GRAY,fontFace:F});});
+      if(vf.length===1){const fy=1.42+vc.length*1.32;
+        sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:fy,w:5.5,h:0.78,fill:{color:C.LIGHT},line:{color:C.LINE}});
+        sl.addText(vf[0].name+'：'+vf[0].desc,{x:0.55,y:fy,w:5.2,h:0.78,fontSize:11,color:C.NAVY,fontFace:F,valign:'middle'});}
       if(sMin&&sMax){
-        const cx=6.05,cw=3.6;
-        sl.addShape(pres.shapes.RECTANGLE,{x:cx,y:0.75,w:cw,h:4.3,fill:{color:C.BG},line:{color:C.BORDER}});
-        sl.addShape(pres.shapes.RECTANGLE,{x:cx,y:0.75,w:cw,h:0.05,fill:{color:C.NAVY},line:{color:C.NAVY}});
-        sl.addText(stl,{x:cx+0.1,y:0.92,w:cw-0.2,h:0.38,fontSize:12,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-        sl.addText(sMin+'〜',{x:cx,y:1.45,w:cw,h:0.78,fontSize:36,color:C.BLUE,fontFace:F,bold:true,align:'center'});
-        sl.addText(sMax+sUnit,{x:cx,y:2.28,w:cw,h:0.65,fontSize:28,color:C.BLUE,fontFace:F,bold:true,align:'center'});
-        sl.addShape(pres.shapes.LINE,{x:cx+0.2,y:3.05,w:cw-0.4,h:0,line:{color:C.BORDER,width:0.5}});
+        const cx=6.15,cw=3.5;
+        sl.addShape(pres.shapes.RECTANGLE,{x:cx,y:1.35,w:cw,h:3.42,fill:{color:C.LIGHT},line:{color:C.LINE}});
+        sl.addText(stl,{x:cx,y:1.6,w:cw,h:0.4,fontSize:12,color:C.NAVY,fontFace:F,bold:true,align:'center'});
+        sl.addText(sMin+'〜',{x:cx,y:2.1,w:cw,h:0.75,fontSize:36,color:C.BLUE,fontFace:F,bold:true,align:'center'});
+        sl.addText(sMax+sUnit,{x:cx,y:2.88,w:cw,h:0.65,fontSize:28,color:C.BLUE,fontFace:F,bold:true,align:'center'});
+        sl.addShape(pres.shapes.LINE,{x:cx+0.3,y:3.65,w:cw-0.6,h:0,line:{color:C.LINE,width:0.5}});
         const notes=e.salaryNote&&e.salaryNote.trim()?[e.salaryNote]:['賞与・昇給あり','詳細は面接時確認'];
-        notes.slice(0,3).forEach((t,i)=>sl.addText(t,{x:cx,y:3.18+i*0.38,w:cw,h:0.34,fontSize:10,color:C.GRAY,fontFace:F,align:'center'}));
-      }
+        notes.slice(0,2).forEach((t,i)=>sl.addText(t,{x:cx,y:3.78+i*0.32,w:cw,h:0.28,fontSize:9.5,color:C.GRAY,fontFace:F,align:'center'}));}
       ftr(sl,14);}
   }
 
   sec(5,'カルチャー');
 
-  // ── 17. カルチャー（ビジュアル強化） ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 17. カルチャー
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.NAVY};
-    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    // 右上装飾：大きな円
-    sl.addShape(pres.shapes.OVAL,{x:7.5,y:-1.2,w:4.5,h:4.5,fill:{color:'1E3357'},line:{color:'1E3357'}});
-    sl.addShape(pres.shapes.OVAL,{x:8.2,y:-0.5,w:3.0,h:3.0,fill:{color:'162840'},line:{color:'162840'}});
-    sl.addText('CULTURE',{x:0.3,y:0.4,w:3,h:0.3,fontSize:9,color:C.BLUE,fontFace:'Arial',bold:true});
-    // 価値観タグ（より大きく・目立つ）
+    sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.12,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addShape(pres.shapes.OVAL,{x:6.5,y:-1.5,w:5.5,h:5.5,fill:{color:'162840'},line:{color:'162840'}});
+    sl.addText('CULTURE',{x:0.5,y:0.45,w:4,h:0.3,fontSize:9,color:C.BLUE,fontFace:'Arial',bold:true,charSpacing:3});
     const tags=[e.cultureVal1,e.cultureVal2].filter(v=>v&&v.trim());
-    tags.forEach((v,i)=>{const x=0.3+i*2.8;
-      sl.addShape(pres.shapes.RECTANGLE,{x,y:0.82,w:2.6,h:0.55,fill:{color:C.BLUE},line:{color:C.BLUE}});
-      sl.addText(v,{x,y:0.82,w:2.6,h:0.55,fontSize:13,color:C.WHITE,fontFace:F,bold:true,align:'center',valign:'middle'});});
-    sl.addShape(pres.shapes.LINE,{x:0.3,y:1.52,w:3.0,h:0,line:{color:'2A4070',width:1}});
-    sl.addText(e.cultureDesc||'',{x:0.3,y:1.68,w:9.2,h:3.5,fontSize:12.5,color:'A0C0D0',fontFace:F,lineSpacingMultiple:1.8});}
+    tags.forEach((v,i)=>{
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.5+i*3.0,y:0.88,w:2.7,h:0.52,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(v,{x:0.5+i*3.0,y:0.88,w:2.7,h:0.52,fontSize:13,color:C.WHITE,fontFace:F,bold:true,align:'center',valign:'middle'});});
+    sl.addShape(pres.shapes.LINE,{x:0.5,y:1.55,w:2.5,h:0,line:{color:'2A4878',width:1}});
+    sl.addText(e.cultureDesc||'',{x:0.5,y:1.72,w:9.1,h:3.5,fontSize:12,color:'96B8C8',fontFace:F,lineSpacingMultiple:1.85});}
 
-  // ── 18. 社員インタビュー（Q&Aある場合のみ） ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 18. 社員インタビュー
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const iv=e.interview||{};
     const hasIV=(iv.q1&&iv.q1.trim())||(iv.q2&&iv.q2.trim())||(iv.q3&&iv.q3.trim());
     if(hasIV){const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'05','カルチャー');
-      sl.addText('社員の声',{x:0.35,y:0.62,w:9.3,h:0.42,fontSize:17,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-      sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:1.14,w:9.3,h:4.1,fill:{color:C.BG},line:{color:C.BORDER}});
-      sl.addShape(pres.shapes.RECTANGLE,{x:0.35,y:1.14,w:0.06,h:4.1,fill:{color:C.BLUE},line:{color:C.BLUE}});
-      img(sl,'member',0.48,1.28,1.42,1.42);
-      sl.addText(iv.person||'',{x:0.48,y:2.76,w:1.42,h:0.28,fontSize:8.5,color:C.GRAY,fontFace:F,align:'center'});
-      [{q:iv.q1,a:iv.a1,qy:1.28},{q:iv.q2,a:iv.a2,qy:2.5},{q:iv.q3,a:iv.a3,qy:3.72}].forEach(b=>{
+      sl.addText('社員の声',{x:0.4,y:0.65,w:9.2,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      // 写真エリア
+      if(photos['member']){img(sl,'member',0.4,1.38,1.55,1.55);}
+      sl.addText(iv.person||'',{x:0.4,y:2.98,w:1.55,h:0.3,fontSize:8.5,color:C.GRAY,fontFace:F,align:'center'});
+      // Q&A
+      [{q:iv.q1,a:iv.a1,y:1.38},{q:iv.q2,a:iv.a2,y:2.58},{q:iv.q3,a:iv.a3,y:3.78}].forEach(b=>{
         if(!b.q||!b.q.trim())return;
-        sl.addText('Q. '+b.q,{x:2.1,y:b.qy,w:7.45,h:0.3,fontSize:11.5,color:C.BLUE,fontFace:F,bold:true});
-        sl.addText(b.a||'',{x:2.1,y:b.qy+0.32,w:7.45,h:0.8,fontSize:10.5,color:C.TEXT,fontFace:F,lineSpacingMultiple:1.35});});
+        sl.addShape(pres.shapes.RECTANGLE,{x:2.12,y:b.y,w:0.28,h:0.28,fill:{color:C.BLUE},line:{color:C.BLUE}});
+        sl.addText('Q',{x:2.12,y:b.y,w:0.28,h:0.28,fontSize:9,color:C.WHITE,fontFace:F,bold:true,align:'center',valign:'middle'});
+        sl.addText(b.q,{x:2.48,y:b.y,w:7.1,h:0.3,fontSize:11,color:C.BLUE,fontFace:F,bold:true});
+        sl.addText(b.a||'',{x:2.48,y:b.y+0.35,w:7.1,h:0.75,fontSize:10.5,color:C.TEXT,fontFace:F,lineSpacingMultiple:1.4});});
       ftr(sl,18);}}
 
-  // ── 19. こんな方と（クリーン・プロフェッショナル） ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 19. こんな方と
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'05','カルチャー');
-    sl.addText('こんな方と働きたい',{x:0.35,y:0.62,w:9.3,h:0.52,fontSize:20,color:C.NAVY,fontFace:F,bold:true,align:'center'});
-    sl.addText('We are looking for',{x:0.35,y:1.1,w:9.3,h:0.28,fontSize:10,color:C.LGRAY,fontFace:'Arial',italic:true,align:'center'});
+    sl.addText('こんな方と働きたい',{x:0.4,y:0.65,w:9.2,h:0.52,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.2,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addText('We are looking for',{x:0.4,y:1.3,w:9.2,h:0.28,fontSize:9.5,color:C.LGRAY,fontFace:'Arial',italic:true});
     const wanted=(e.wantedList||[]).filter(v=>v&&v.trim()).slice(0,5);
-    wanted.forEach((v,i)=>{const y=1.52+i*0.7;
-      sl.addShape(pres.shapes.RECTANGLE,{x:0.8,y,w:8.4,h:0.55,fill:{color:C.BG},line:{color:C.BORDER}});
-      sl.addShape(pres.shapes.RECTANGLE,{x:0.8,y,w:0.06,h:0.55,fill:{color:C.BLUE},line:{color:C.BLUE}});
-      // 番号
-      sl.addText(String(i+1).padStart(2,'0'),{x:0.92,y,w:0.5,h:0.55,fontSize:10,color:C.BLUE,fontFace:F,bold:true,valign:'middle',align:'center'});
-      sl.addShape(pres.shapes.LINE,{x:1.44,y:y+0.1,w:0,h:0.35,line:{color:C.BORDER,width:0.5}});
-      sl.addText(v,{x:1.55,y,w:7.5,h:0.55,fontSize:13,color:C.TEXT,fontFace:F,valign:'middle'});});
+    wanted.forEach((v,i)=>{const y=1.72+i*0.7;
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y,w:9.2,h:0.56,fill:{color:C.BG},line:{color:C.BORDER}});
+      sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y,w:0.07,h:0.56,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(String(i+1).padStart(2,'0'),{x:0.55,y,w:0.45,h:0.56,fontSize:10,color:C.BLUE,fontFace:'Arial',bold:true,valign:'middle',align:'center'});
+      sl.addShape(pres.shapes.LINE,{x:1.02,y:y+0.1,w:0,h:0.36,line:{color:C.BORDER,width:0.5}});
+      sl.addText(v,{x:1.15,y,w:8.35,h:0.56,fontSize:12.5,color:C.TEXT,fontFace:F,valign:'middle'});});
     ftr(sl,19);}
 
   sec(6,'働き方・制度');
 
-  // ── 21. 働き方（クリーン・プロフェッショナル） ──
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 21. 働き方
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'06','働き方・制度');
-    [['就業時間',e.workHours||''],['勤務地',e.workLocation||''],['休暇・休日',(e.holidays||[]).join('\n')]].forEach((s,i)=>{
-      const y=0.65+i*1.52;
-      sl.addShape(pres.shapes.OVAL,{x:0.28,y:y+0.04,w:0.36,h:0.36,fill:{color:C.NAVY},line:{color:C.NAVY}});
-      sl.addText(s[0],{x:0.78,y,w:1.5,h:0.4,fontSize:13,color:C.NAVY,fontFace:F,bold:true});
-      sl.addShape(pres.shapes.LINE,{x:2.35,y:y+0.22,w:2.3,h:0,line:{color:C.BORDER,width:0.8}});
-      sl.addText(s[1],{x:0.78,y:y+0.44,w:4.2,h:1.0,fontSize:9.5,color:C.TEXT,fontFace:F,lineSpacingMultiple:1.3});});
-    sl.addShape(pres.shapes.RECTANGLE,{x:5.1,y:0.62,w:4.58,h:4.6,fill:{color:C.BG},line:{color:C.BORDER}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:5.1,y:0.62,w:4.58,h:0.05,fill:{color:C.NAVY},line:{color:C.NAVY}});
-    sl.addText('福利厚生',{x:5.22,y:0.72,w:4.3,h:0.38,fontSize:13,color:C.NAVY,fontFace:F,bold:true});
-    sl.addShape(pres.shapes.LINE,{x:5.22,y:1.13,w:4.2,h:0,line:{color:C.BORDER,width:0.5}});
-    (e.benefits||[]).slice(0,7).forEach((b,i)=>{
-      sl.addShape(pres.shapes.RECTANGLE,{x:5.22,y:1.24+i*0.44,w:0.06,h:0.32,fill:{color:C.BLUE},line:{color:C.BLUE}});
-      sl.addText(b,{x:5.36,y:1.24+i*0.44,w:4.2,h:0.38,fontSize:10.5,color:C.TEXT,fontFace:F,valign:'middle'});});
+    [['就業時間',e.workHours||''],['勤務地',e.workLocation||''],['休暇・休日',(e.holidays||[]).join('　')]].forEach((s,i)=>{
+      const y=0.72+i*1.5;
+      sl.addShape(pres.shapes.OVAL,{x:0.4,y:y+0.06,w:0.36,h:0.36,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(s[0],{x:0.9,y,w:1.5,h:0.42,fontSize:12,color:C.NAVY,fontFace:F,bold:true});
+      sl.addShape(pres.shapes.LINE,{x:0.4,y:y+0.48,w:5.4,h:0,line:{color:C.BORDER,width:0.5}});
+      sl.addText(s[1],{x:0.9,y:y+0.56,w:5.2,h:0.88,fontSize:10,color:C.TEXT,fontFace:F,lineSpacingMultiple:1.4});});
+    // 福利厚生
+    sl.addShape(pres.shapes.RECTANGLE,{x:6.1,y:0.68,w:3.65,h:4.46,fill:{color:C.BG},line:{color:C.BORDER}});
+    sl.addShape(pres.shapes.RECTANGLE,{x:6.1,y:0.68,w:3.65,h:0.06,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addText('福利厚生',{x:6.22,y:0.82,w:3.4,h:0.35,fontSize:11,color:C.NAVY,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.LINE,{x:6.22,y:1.2,w:3.3,h:0,line:{color:C.BORDER,width:0.5}});
+    (e.benefits||[]).filter(b=>b&&b.trim()).slice(0,8).forEach((b,i)=>{
+      sl.addShape(pres.shapes.RECTANGLE,{x:6.22,y:1.32+i*0.42,w:0.05,h:0.3,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(b,{x:6.35,y:1.32+i*0.42,w:3.28,h:0.36,fontSize:10,color:C.TEXT,fontFace:F,valign:'middle'});});
     ftr(sl,21);}
 
   await pres.writeFile({fileName:cn+'_採用ピッチ資料.pptx'});
