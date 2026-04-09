@@ -327,10 +327,18 @@ async function makePptx(e,url,photos){
       const lw=Math.min(ratio*lh,2.5);
       sl.addImage({data:photos['logo'],x:0.4,y:0.3,w:lw,h:lh});
     }
-    // 会社名（文字数に応じてフォントサイズ自動調整）
+    // 会社名（「株式会社」を分離して2行表示）
     const titleY=photos['logo']?1.2:1.0;
-    const cnFontSize=cn.length<=8?34:cn.length<=12?28:cn.length<=16?24:20;
-    sl.addText(cn,{x:0.4,y:titleY,w:4.0,h:1.0,fontSize:cnFontSize,color:C.TEXT,fontFace:F,bold:true,lineSpacingMultiple:1.2});
+    const prefix=['株式会社','合同会社','有限会社','一般社団法人','特定非営利活動法人','NPO法人'].find(p=>cn.startsWith(p));
+    if(prefix){
+      const rest=cn.replace(prefix,'').trim();
+      const restSize=rest.length<=6?30:rest.length<=10?26:rest.length<=14?22:18;
+      sl.addText(prefix,{x:0.4,y:titleY,w:4.1,h:0.38,fontSize:13,color:C.GRAY,fontFace:F});
+      sl.addText(rest,{x:0.4,y:titleY+0.4,w:4.1,h:0.75,fontSize:restSize,color:C.TEXT,fontFace:F,bold:true});
+    }else{
+      const cnSize=cn.length<=8?30:cn.length<=12?26:cn.length<=16?22:18;
+      sl.addText(cn,{x:0.4,y:titleY,w:4.1,h:0.85,fontSize:cnSize,color:C.TEXT,fontFace:F,bold:true,autoFit:true});
+    }
     // 区切り線
     sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:titleY+1.1,w:1.8,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
     // サブタイトル
