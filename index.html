@@ -205,9 +205,8 @@ async function makePptx(e,url,photos){
     sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.50,fill:{color:C.NAVY},line:{color:C.NAVY}});
     sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:0.50,fill:{color:C.BLUE},line:{color:C.BLUE}});
     sl.addText(String(num).padStart(2,'0')+'  '+title,{x:0.2,y:0,w:7,h:0.50,fontSize:12,color:C.WHITE,fontFace:F,bold:true,valign:'middle'});
-    // ロゴがあれば右上に表示、なければ社名テキスト
     if(photos['logo']){
-      sl.addImage({data:photos['logo'],x:8.6,y:0.04,w:1.2,h:0.42,sizing:{type:'contain',w:1.2,h:0.42}});
+      sl.addImage({data:photos['logo'],x:8.55,y:0.05,w:1.3,h:0.4});
     }else{
       sl.addText(cn,{x:7,y:0,w:2.9,h:0.50,fontSize:9,color:'7AAAC8',fontFace:F,valign:'middle',align:'right'});
     }
@@ -235,9 +234,8 @@ async function makePptx(e,url,photos){
     img(sl,'cover',4.8,0,5.2,5.625);
     sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:5.4,h:5.625,fill:{color:C.NAVY},line:{color:C.NAVY}});
     sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.07,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    // ロゴがあれば左上に表示
     if(photos['logo']){
-      sl.addImage({data:photos['logo'],x:0.35,y:0.3,w:2.0,h:0.7,sizing:{type:'contain',w:2.0,h:0.7}});
+      sl.addImage({data:photos['logo'],x:0.35,y:0.28,w:2.0,h:0.7});
       sl.addText(cn,{x:0.35,y:1.3,w:4.8,h:0.9,fontSize:28,color:C.WHITE,fontFace:F,bold:true,valign:'middle'});
     }else{
       sl.addText(cn,{x:0.35,y:1.3,w:4.8,h:0.9,fontSize:28,color:C.WHITE,fontFace:F,bold:true,valign:'middle'});
