@@ -361,32 +361,21 @@ async function makePptx(e,url,photos){
   sec(2,'組織');
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // 7. 組織
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 7. 組織（求める人物像のみ・2列レイアウト）
   {const sl=pres.addSlide();sl.background={color:C.WHITE};hdr(sl,'02','組織');
-    const orgCards=[[e.employees,'従業員数'],[e.founded,'設立'],[e.ceo,'代表者']]
-      .filter(([n])=>n&&n.trim()&&!isIndeedRange(n));
-    const leftW=6.8;
-    const cardW=orgCards.length<=2?2.8:1.9;
-    const cardGap=orgCards.length<=2?0.5:0.28;
-    const totalW=orgCards.length*cardW+(orgCards.length-1)*cardGap;
-    const startX=(leftW-totalW)/2;
-    const cardY=1.8;
-    orgCards.forEach(([n,l],i)=>{const x=startX+i*(cardW+cardGap);
-      sl.addShape(pres.shapes.RECTANGLE,{x,y:cardY,w:cardW,h:1.7,fill:{color:C.LIGHT},line:{color:C.LINE}});
-      sl.addShape(pres.shapes.RECTANGLE,{x,y:cardY,w:cardW,h:0.06,fill:{color:C.BLUE},line:{color:C.BLUE}});
-      sl.addText(n,{x,y:cardY+0.15,w:cardW,h:0.9,fontSize:24,color:C.BLUE,fontFace:F,bold:true,align:'center',valign:'middle'});
-      sl.addShape(pres.shapes.LINE,{x:x+0.3,y:cardY+1.02,w:cardW-0.6,h:0,line:{color:C.LINE,width:0.5}});
-      sl.addText(l,{x,y:cardY+1.1,w:cardW,h:0.35,fontSize:10,color:C.GRAY,fontFace:F,align:'center'});});
-    // 求める人物像
-    sl.addShape(pres.shapes.RECTANGLE,{x:7.1,y:0.68,w:2.65,h:4.46,fill:{color:C.BG},line:{color:C.BORDER}});
-    sl.addShape(pres.shapes.RECTANGLE,{x:7.1,y:0.68,w:2.65,h:0.06,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    sl.addText('求める人物像',{x:7.22,y:0.82,w:2.4,h:0.32,fontSize:10,color:C.NAVY,fontFace:F,bold:true});
-    sl.addShape(pres.shapes.LINE,{x:7.22,y:1.17,w:2.3,h:0,line:{color:C.BORDER,width:0.5}});
-    const trunc=(s,n=16)=>s&&s.length>n?s.slice(0,n-1)+'…':s||'';
-    (e.wantedList||[]).filter(v=>v&&v.trim()).slice(0,6).forEach((v,i)=>{
-      sl.addShape(pres.shapes.RECTANGLE,{x:7.22,y:1.28+i*0.47,w:0.05,h:0.3,fill:{color:C.BLUE},line:{color:C.BLUE}});
-      sl.addText(trunc(v),{x:7.35,y:1.26+i*0.47,w:2.25,h:0.36,fontSize:9,color:C.TEXT,fontFace:F,valign:'middle'});});
+    sl.addText('求める人物像',{x:0.4,y:0.72,w:9.2,h:0.5,fontSize:18,color:C.TEXT,fontFace:F,bold:true});
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:1.28,w:1.5,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    const wanted=(e.wantedList||[]).filter(v=>v&&v.trim());
+    const colW=4.5,gap=0.5;
+    wanted.slice(0,6).forEach((v,i)=>{
+      const col=i%2,row=Math.floor(i/2);
+      const x=0.4+col*(colW+gap);
+      const y=1.5+row*0.88;
+      sl.addShape(pres.shapes.RECTANGLE,{x,y,w:colW,h:0.68,fill:{color:C.BG},line:{color:C.BORDER}});
+      sl.addShape(pres.shapes.RECTANGLE,{x,y,w:0.07,h:0.68,fill:{color:C.BLUE},line:{color:C.BLUE}});
+      sl.addText(String(i+1).padStart(2,'0'),{x:x+0.12,y,w:0.45,h:0.68,fontSize:10,color:C.BLUE,fontFace:'Arial',bold:true,valign:'middle',align:'center'});
+      sl.addShape(pres.shapes.LINE,{x:x+0.6,y:y+0.14,w:0,h:0.4,line:{color:C.BORDER,width:0.5}});
+      sl.addText(v,{x:x+0.72,y,w:colW-0.8,h:0.68,fontSize:11.5,color:C.TEXT,fontFace:F,valign:'middle'});});
     ftr(sl,7);}
 
   sec(3,'事業紹介');
