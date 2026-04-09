@@ -90,7 +90,7 @@ module.exports = async function(req, res) {
       if (w < 200 || h < 150) continue; // 小さい画像を除外
 
       photoUrls.push(src);
-      if (photoUrls.length >= 10) break;
+      if (photoUrls.length >= 20) break;
     }
 
     // 画像をbase64に変換
@@ -124,14 +124,14 @@ module.exports = async function(req, res) {
     // OGP画像はcoverスロット
     if (ogImage) fetchTargets.push({ key: 'cover', url: ogImage, minSize: 50000 });
     // サイト内写真（ロゴURLと被らないものだけ）
-    const otherKeys = ['company', 'biz1', 'culture'];
-    photoUrls.filter(u => u !== logoUrl && u !== ogImage).slice(0, 6).forEach((url, i) => {
+    const otherKeys = ['company', 'biz1', 'biz2', 'culture', 'member'];
+    photoUrls.filter(u => u !== logoUrl && u !== ogImage).slice(0, 10).forEach((url, i) => {
       if (i < otherKeys.length) fetchTargets.push({ key: otherKeys[i], url, minSize: 50000 });
     });
 
-    // 並行で取得（最大5枚）
+    // 並行で取得（最大8枚）
     await Promise.allSettled(
-      fetchTargets.slice(0, 5).map(async ({ key, url, minSize }) => {
+      fetchTargets.slice(0, 8).map(async ({ key, url, minSize }) => {
         try {
           const imgRes = await fetch(url, {
             headers: { 'User-Agent': 'Mozilla/5.0 (compatible; PitchGenerator/1.0)' },
