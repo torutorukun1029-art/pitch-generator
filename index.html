@@ -320,22 +320,23 @@ async function makePptx(e,url,photos){
     }
     // 左の縦ライン
     sl.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.12,h:5.625,fill:{color:C.BLUE},line:{color:C.BLUE}});
-    // ロゴ
+    // ロゴ（横長に統一・高さ固定）
     if(photos['logo']){
       const ratio=photos['logo_ratio']||1;
-      const lh=0.9;
-      const lw=Math.min(ratio*lh,3.5);
-      sl.addImage({data:photos['logo'],x:0.4,y:0.35,w:lw,h:lh});
+      const lh=0.65;
+      const lw=Math.min(ratio*lh,2.5);
+      sl.addImage({data:photos['logo'],x:0.4,y:0.3,w:lw,h:lh});
     }
-    // 会社名
-    const titleY=photos['logo']?1.5:1.2;
-    sl.addText(cn,{x:0.4,y:titleY,w:4.0,h:1.1,fontSize:30,color:C.TEXT,fontFace:F,bold:true,lineSpacingMultiple:1.2});
+    // 会社名（文字数に応じてフォントサイズ自動調整）
+    const titleY=photos['logo']?1.2:1.0;
+    const cnFontSize=cn.length<=8?34:cn.length<=12?28:cn.length<=16?24:20;
+    sl.addText(cn,{x:0.4,y:titleY,w:4.0,h:1.0,fontSize:cnFontSize,color:C.TEXT,fontFace:F,bold:true,lineSpacingMultiple:1.2});
     // 区切り線
-    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:titleY+1.2,w:1.8,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
+    sl.addShape(pres.shapes.RECTANGLE,{x:0.4,y:titleY+1.1,w:1.8,h:0.05,fill:{color:C.BLUE},line:{color:C.BLUE}});
     // サブタイトル
-    sl.addText('採用ピッチ資料',{x:0.4,y:titleY+1.4,w:4.0,h:0.5,fontSize:15,color:C.GRAY,fontFace:F});
+    sl.addText('採用ピッチ資料',{x:0.4,y:titleY+1.28,w:4.0,h:0.5,fontSize:15,color:C.GRAY,fontFace:F});
     // URL
-    if(url) sl.addText(url,{x:0.4,y:titleY+2.0,w:4.0,h:0.35,fontSize:9,color:C.LBLUE,fontFace:F});
+    if(url) sl.addText(url,{x:0.4,y:titleY+1.88,w:4.0,h:0.35,fontSize:9,color:C.LBLUE,fontFace:F});
     // フッター
     sl.addText('© '+cn,{x:0.4,y:5.26,w:4,h:0.24,fontSize:8,color:C.LGRAY,fontFace:F});}
 
