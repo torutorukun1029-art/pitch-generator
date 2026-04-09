@@ -172,6 +172,31 @@ async function startGenerate(){
   if(!text){showError('Indeed原稿を貼り付けてください');return;}
   setStep(2);document.getElementById('form-area').style.display='none';document.getElementById('loading-area').style.display='block';document.getElementById('error-box').style.display='none';
   const pw=sessionStorage.getItem('pw');let extracted=null;
+
+  // HPの画像を自動取得
+  if(url&&url.startsWith('http')){
+    document.getElementById('loading-msg').textContent='HPから画像を取得中...';
+    try{
+      const imgRes=await fetch('/api/fetch-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hpUrl:url,password:pw})});
+      const imgData=await imgRes.json();
+      if(imgData.images){
+        Object.entries(imgData.images).forEach(([key,b64])=>{
+          // 手動でアップロードしていない場合のみ自動配置
+          if(!photos[key]&&b64){
+            photos[key]=b64;
+            const slot=document.getElementById('slot-'+key);
+            if(slot){
+              slot.querySelector('.photo-empty').innerHTML=`<img src="${b64}" style="width:100%;height:110px;object-fit:cover;display:block">`;
+            }
+          }
+        });
+      }
+    }catch(e){
+      // 画像取得失敗は無視して続行
+    }
+  }
+
+  document.getElementById('loading-msg').textContent='求人原稿を解析中...';
   for(let i=1;i<=4;i++){
     if(i>1){document.getElementById('loading-msg').textContent=`混雑中... リトライ ${i}/4`;await sleep(3000*i);}
     try{
